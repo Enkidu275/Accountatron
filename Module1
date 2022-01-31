@@ -1,0 +1,932 @@
+Public Function VHLOOKUP(lookup_value As String, table_array As Range, multipliers As Integer) As Double
+Dim cumulativevalue As Double
+Dim i As Integer
+Dim value As Double
+    cumulativevalue = 0
+    For Each table_cell In table_array
+        If Left(table_cell.value, Len(lookup_value)) = lookup_value Then
+            i = 1
+            value = 1
+            While i <= multipliers
+                If (IsNumeric(table_cell.Offset(0, i).value)) Then
+                    value = value * table_cell.Offset(0, i).value
+                Else
+                    value = 0
+                End If
+                i = i + 1
+            Wend
+            cumulativevalue = cumulativevalue + value
+        End If
+    Next
+    VHLOOKUP = cumulativevalue
+End Function
+
+Public Function TLOOKUP(lookup_value As String, table_array As Range) As Double
+Dim cumulative_value As Double
+Dim correct_lookup As Boolean
+    cumulative_value = 0
+    correct_lookup = False
+    For Each table_cell In table_array
+        If table_cell.Column = 1 And table_cell.value = lookup_value Then correct_lookup = True
+        If table_cell.Column = 1 And table_cell.value <> lookup_value Then correct_lookup = False
+        If correct_lookup And table_cell.Column > 3 And Not IsEmpty(table_cell.value) And IsNumeric(table_cell.Offset(0, 1).value) And IsNumeric(table_cell.Offset(0, 2).value) Then cumulative_value = cumulative_value + table_cell.Offset(0, 1).value * table_cell.Offset(0, 2).value
+    Next
+    TLOOKUP = cumulative_value
+End Function
+
+Public Function SUMLOOKUP(table_array As Range) As Double
+Dim cumulative_value As Double
+    cumulative_value = 0
+    For Each table_cell In table_array
+        If table_cell.Column > 3 And Not IsEmpty(table_cell.value) And Not IsNumeric(table_cell.value) And IsNumeric(table_cell.Offset(0, 1).value) And IsNumeric(table_cell.Offset(0, 1).value) Then cumulative_value = cumulative_value + table_cell.Offset(0, 1).value * table_cell.Offset(0, 2).value
+    Next
+    SUMLOOKUP = cumulative_value
+End Function
+
+Public Function ACCOUNTCOLUMN(account_name As String) As Integer
+Dim heading_row As Range
+    Set heading_row = ActiveWorkbook.Sheets("Account Names").Range("1:1")
+    For Each label_cell In heading_row
+        If label_cell.value = account_name Or IsEmpty(label_cell.value) Then
+            ACCOUNTCOLUMN = label_cell.Column
+            Exit Function
+        End If
+    Next
+    ACCOUNTCOLUMN = 0
+End Function
+
+Public Function ACCOUNTCOUNT(account_name As String) As Integer
+Dim heading_row As Range
+Dim account_column As Range
+Dim i As Integer
+    Set heading_row = ActiveWorkbook.Sheets("Account Names").Range("1:1")
+    i = 0
+    For Each label_cell In heading_row
+        If label_cell.value = account_name Or IsEmpty(label_cell.value) Then
+            While Not IsEmpty(label_cell.Offset(1 + i, 0))
+                i = i + 1
+            Wend
+            ACCOUNTCOUNT = i
+            Exit Function
+        End If
+    Next
+    ACCOUNTCOUNT = 0
+End Function
+
+Public Function ACCOUNTNAMES(account_name As String) As Range
+Dim heading_row As Range
+Dim account_column As Range
+Dim i As Integer
+    Set heading_row = ActiveWorkbook.Sheets("Account Names").Range("1:1")
+    Set account_column = ActiveWorkbook.Sheets("Account Names").Range(Cells(2, 1), Cells(2, 1))
+    For Each label_cell In heading_row
+        If label_cell.value = account_name Or IsEmpty(label_cell.value) Then
+            i = 0
+            While Not IsEmpty(label_cell.Offset(1 + i, 0))
+                i = i + 1
+            Wend
+            Set account_column = ActiveWorkbook.Sheets("Account Names").Range(Cells(2, label_cell.Column), Cells(i + 1, label_cell.Column))
+            Exit For
+        End If
+    Next
+    Set ACCOUNTNAMES = account_column
+End Function
+
+Public Function FIFO(lookup_value As String, table_array As Range, quantity As Double) As Double
+Dim cumulativevalue As Double
+Dim CumulativeQuantity As Double
+    cumulativevalue = 0
+    CumulativeQuantity = 0
+    For Each table_cell In table_array
+        If table_cell.value = lookup_value And (IsNumeric(table_cell.Offset(0, 1).value) And IsNumeric(table_cell.Offset(0, 2).value)) Then
+            If quantity - CumulativeQuantity < table_cell.Offset(0, 1) Then
+                cumulativevalue = cumulativevalue + table_cell.Offset(0, 2).value * (quantity - CumulativeQuantity)
+                Exit For
+            Else
+                cumulativevalue = cumulativevalue + table_cell.Offset(0, 2).value * table_cell.Offset(0, 1).value
+                CumulativeQuantity = CumulativeQuantity + table_cell.Offset(0, 1).value
+            End If
+        End If
+    Next
+    FIFO = cumulativevalue
+End Function
+
+Public Function BEGINENTRYROW(sheet As String, entry_date As Date) As Integer
+    Dim current_row As Integer
+    Dim date_number As Double
+        current_row = 1
+        date_number = datevalue(entry_date)
+        While IsDate(ActiveWorkbook.Sheets(sheet).Cells(current_row + 1, 3).value)
+            current_row = current_row + 1
+            If datevalue(ActiveWorkbook.Sheets(sheet).Cells(current_row + 1, 3)) >= date_number Then
+                BEGINENTRYROW = current_row
+                Exit Function
+            End If
+        Wend
+        BEGINENTRYROW = current_row
+End Function
+
+Public Function ENDENTRYROW(sheet As String, entry_date As Date) As Integer
+    Dim current_row As Integer
+    Dim date_number As Double
+        current_row = 1
+        date_number = datevalue(entry_date)
+        While IsDate(ActiveWorkbook.Sheets(sheet).Cells(current_row + 1, 3).value)
+            current_row = current_row + 1
+            If datevalue(ActiveWorkbook.Sheets(sheet).Cells(current_row + 1, 3)) > date_number Then
+                ENDENTRYROW = current_row
+                Exit Function
+            End If
+        Wend
+        ENDENTRYROW = current_row
+End Function
+
+Public Function LASTENTRYROW(sheet As String) As Integer
+    Dim current_row As Integer
+        current_row = 1
+        While IsDate(ActiveWorkbook.Sheets(sheet).Cells(current_row + 1, 3).value)
+            current_row = current_row + 1
+        Wend
+        LASTENTRYROW = current_row
+End Function
+
+Public Function ENTRYRANGE(sheet As String, relevant_date As Date, mode As String) As Range
+    If mode = "Beg" Then
+        Set ENTRYRANGE = ActiveWorkbook.Sheets(sheet).Range("A2:Z" & BEGINENTRYROW(sheet, relevant_date))
+        Exit Function
+    End If
+    If mode = "End" Then
+        Set ENTRYRANGE = ActiveWorkbook.Sheets(sheet).Range("A2:Z" & ENDENTRYROW(sheet, relevant_date))
+        Exit Function
+    End If
+    Set ENTRYRANGE = ActiveWorkbook.Sheets(sheet).Range("A2:Z" & LASTENTRYROW(sheet))
+End Function
+
+Public Function TVM(lookup_value As String, table_array As Range, current_time As Date) As Double
+Dim multiplier As Double
+Dim total_value As Double
+Dim relevant_time As Date
+Dim i As Integer
+Dim temp As String
+
+    temp = ""
+    For i = 1 To Len(lookup_value)
+        c = Mid(lookup_value, i, 1)
+        If c Like "[0-9]" Or c = "." Then temp = temp & c
+        If c = "%" Then Exit For
+    Next i
+    multiplier = 1 + CDbl(temp) / 100
+    
+    total_value = 0
+    current_number = datevalue(current_time)
+    For Each table_cell In table_array
+        If table_cell.Column = 3 And IsDate(table_cell.value) Then relevant_time = datevalue(table_cell.value)
+        If table_cell.value = lookup_value And (IsNumeric(table_cell.Offset(0, 1).value) And IsNumeric(table_cell.Offset(0, 2).value)) Then total_value = total_value + table_cell.Offset(0, 1).value * table_cell.Offset(0, 2).value * multiplier ^ ((current_time - relevant_time) / 365.25)
+    Next
+    TVM = total_value
+End Function
+
+Public Function LTA(lookup_value As String, purchase_table As Range, sell_table As Range, current_time As Date, mode As String) As Double
+Dim total_purchased_price As Double
+Dim total_purchased_count As Double
+Dim total_sold_cost As Double
+Dim total_sold_price As Double
+Dim total_sold_count As Double
+Dim contra_sold As Double
+Dim contra_remain As Double
+Dim current_report_time As Double
+Dim current_purchase_time As Double
+Dim current_sell_time As Double
+Dim sell_lookup As String
+Dim life As Double
+Dim temp As String
+Dim i As Long
+Dim c As String
+Dim result As Double
+Dim datechecked As Boolean
+    current_report_time = datevalue(current_time)
+    total_purchased_price = 0
+    total_purchased_count = 0
+    total_sold_cost = 0
+    total_sold_price = 0
+    total_sold_cost = 0
+    contra_sold = 0
+    contra_remain = 0
+    temp = ""
+    datechecked = False
+    
+    For i = 1 To Len(lookup_value)
+        c = Mid(lookup_value, i, 1)
+        If c Like "[0-9]" Or c = "." Then temp = temp & c
+    Next i
+    life = CDbl(temp)
+    
+    i = 0
+    current_purchase_time = 0
+    For Each purchase_cell In purchase_table
+        If purchase_cell.Column = 3 And IsDate(purchase_cell.value) Then
+            If datevalue(purchase_cell.value) <> current_purchase_time Then
+                datechecked = True
+                current_purchase_time = datevalue(purchase_cell.value)
+            End If
+        End If
+        If purchase_cell.value = lookup_value And IsNumeric(purchase_cell.Offset(0, 1).value) And IsNumeric(purchase_cell.Offset(0, 2).value) Then
+            total_purchased_price = total_purchased_price + purchase_cell.Offset(0, 1).value * purchase_cell.Offset(0, 2).value
+            total_purchased_count = total_purchased_count + purchase_cell.Offset(0, 1).value
+            If life > 0 Then contra_remain = contra_remain + purchase_cell.Offset(0, 1).value * purchase_cell.Offset(0, 2).value * Application.WorksheetFunction.Min(1, (current_report_time - current_purchase_time) / (365.25 * life))
+            sell_lookup = lookup_value & ": " & CStr(CDate(current_purchase_time))
+            current_sell_time = 0
+            If datechecked Then
+                For Each sell_cell In sell_table
+                    If sell_cell.Column = 3 And IsDate(sell_cell.value) Then current_sell_time = datevalue(sell_cell.value)
+                    If sell_cell.value = sell_lookup And IsNumeric(sell_cell.Offset(0, 1).value) And IsNumeric(sell_cell.Offset(0, 2).value) Then
+                        total_sold_price = total_sold_price + sell_cell.Offset(0, 1).value * sell_cell.Offset(0, 2).value
+                        total_sold_cost = total_sold_cost + sell_cell.Offset(0, 1).value * purchase_cell.Offset(0, 2).value
+                        total_sold_count = total_sold_count + sell_cell.Offset(0, 1).value
+                        If life > 0 Then contra_remain = contra_remain - sell_cell.Offset(0, 1).value * purchase_cell.Offset(0, 2).value * Application.WorksheetFunction.Min(1, (current_report_time - current_purchase_time) / (365.25 * life))
+                        If life > 0 Then contra_sold = contra_sold + sell_cell.Offset(0, 1).value * purchase_cell.Offset(0, 2).value * Application.WorksheetFunction.Min(1, (current_sell_time - current_purchase_time) / (365.25 * life))
+                    End If
+                Next
+            End If
+            datechecked = True
+        End If
+    Next purchase_cell
+    
+    result = 0
+    If mode = "gross" Then result = Round(total_purchased_price - total_sold_cost)
+    If mode = "contra" Then result = Round(contra_remain)
+    If mode = "net" Then result = Round(total_purchased_price - total_sold_cost - contra_remain)
+    If mode = "count" Then result = Round(total_purchased_count - total_sold_count)
+    If mode = "gain" Then result = Round(total_sold_price - total_sold_cost + contra_sold)
+    If mode = "life" Then result = life
+    If mode = "expense" Then result = Round(contra_remain + contra_sold)
+    LTA = result
+End Function
+
+Public Function INVENTORYUSED(lookup_value As String, invoice_range As Range) As Double
+Dim total_count_used As Double
+Dim bom_row As Integer
+
+    bom_row = 0
+    For Each inventory_cell In ActiveWorkbook.Sheets("Bill Of Materials").Range("A:A")
+        If inventory_cell.value = lookup_value Then
+            bom_row = inventory_cell.Row
+            Exit For
+        End If
+        If inventory_cell.Row > 1 And IsEmpty(inventory_cell.value) Then
+            INVENTORYUSED = VHLOOKUP(lookup_value, invoice_range, 1)
+        End If
+    Next
+    
+    If bom_row = 0 Then
+        INVENTORYUSED = VHLOOKUP(lookup_value, invoice_range, 1)
+        Exit Function
+    End If
+    
+    total_count_used = 0
+    If bom_row > 1 Then
+        For Each bom_heading In ActiveWorkbook.Sheets("Bill Of Materials").Range("1:1")
+            If bom_heading.Column > 1 And IsEmpty(bom_heading.value) Then Exit For
+            If bom_heading.Offset(bom_row - 1, 0).value > 0 And Not IsEmpty(bom_heading.value) Then
+                total_count_used = total_count_used + VHLOOKUP(bom_heading.value, invoice_range, 1) * ActiveWorkbook.Sheets("Bill Of Materials").Cells(bom_row, bom_heading.Column).value
+            End If
+        Next
+    End If
+    
+    INVENTORYUSED = total_count_used + VHLOOKUP(lookup_value, invoice_range, 1)
+End Function
+
+Public Function CASHFLOWBASIS(account_column As String, invoice_range As Range, paid_amount As Double) As Double
+    Dim account_names As Range
+    Dim relevant_cash_flow As Double
+    Dim current_cumulative_invoice As Double
+    Dim correct_who As Boolean
+    Dim correct_account As Boolean
+        relevant_cash_flow = 0
+        current_cumulative_invoice = 0
+        correct_who = False
+        Set account_names = ACCOUNTNAMES(account_column)
+        For Each invoice_cell In invoice_range
+            If Not IsEmpty(invoice_cell.value) And Not IsNumeric(invoice_cell.value) And IsNumeric(invoice_cell.Offset(0, 1).value) And IsNumeric(invoice_cell.Offset(0, 2).value) Then
+                correct_account = False
+                For Each account_cell In account_names
+                    If account_cell.value = Left(invoice_cell.value, Len(account_cell.value)) Then correct_account = True
+                Next
+                If correct_account Then relevant_cash_flow = relevant_cash_flow + invoice_cell.Offset(0, 1).value * invoice_cell.Offset(0, 2).value
+                current_cumulative_invoice = current_cumulative_invoice + invoice_cell.Offset(0, 1).value * invoice_cell.Offset(0, 2).value
+                If current_cumulative_invoice >= paid_amount Then
+                    If correct_account Then relevant_cash_flow = relevant_cash_flow + paid_amount - current_cumulative_invoice
+                    CASHFLOWBASIS = relevant_cash_flow
+                    Exit Function
+                End If
+            End If
+        Next
+        CASHFLOWBASIS = relevant_cash_flow
+End Function
+
+Public Function ACCOUNTINGDETAIL(record_row As Integer, record_column As Integer, begin_date As Date, end_date As Date) As String
+Dim vendor_column As Integer, customer_column As Integer, worker_column As Integer, owner_column As Integer, product_column As Integer, inventory_column As Integer, revenue_column As Integer, expense_column As Integer, property_column As Integer, intangible_column As Integer, investment_column As Integer, debt_column As Integer
+Dim i As Integer
+Dim relevant_row As Integer
+Dim relevant_lookup As String
+
+    vendor_column = ACCOUNTCOLUMN("Vendors")
+    customer_column = ACCOUNTCOLUMN("Customers")
+    worker_column = ACCOUNTCOLUMN("Workers")
+    owner_column = ACCOUNTCOLUMN("Owners")
+    product_column = ACCOUNTCOLUMN("Products")
+    inventory_column = ACCOUNTCOLUMN("Inventory")
+    revenue_column = ACCOUNTCOLUMN("Revenues")
+    expense_column = ACCOUNTCOLUMN("Expenses")
+    property_column = ACCOUNTCOLUMN("Property")
+    intangible_column = ACCOUNTCOLUMN("Intangibles")
+    investment_column = ACCOUNTCOLUMN("Investments")
+    debt_column = ACCOUNTCOLUMN("Debt")
+    
+    i = ACCOUNTCOUNT("Products")
+    If record_row <= i Then
+        relevant_lookup = ActiveWorkbook.Sheets("Account Names").Cells(1 + record_row, product_column).value
+        If record_column = 1 Then
+            ACCOUNTINGDETAIL = "Product Revenue: " & relevant_lookup
+            Exit Function
+        End If
+        
+        If record_column = 2 Then
+            ACCOUNTINGDETAIL = CStr(VHLOOKUP(relevant_lookup, ENTRYRANGE("Invoice Sent", begin_date, "Beg"), 2))
+            Exit Function
+        End If
+        
+        If record_column = 3 Then
+            ACCOUNTINGDETAIL = CStr(VHLOOKUP(relevant_lookup, ENTRYRANGE("Invoice Sent", end_date, "End"), 2))
+            Exit Function
+        End If
+        
+        If record_column = 4 Then
+            ACCOUNTINGDETAIL = CStr(VHLOOKUP(relevant_lookup, ENTRYRANGE("Invoice Sent", begin_date, "Now"), 2))
+            Exit Function
+        End If
+        
+        ACCOUNTINGDETAIL = ""
+        Exit Function
+    End If
+    
+    i = i + ACCOUNTCOUNT("Inventory")
+    If record_row <= i Then
+        relevant_row = record_row - i + ACCOUNTCOUNT("Revenues")
+        relevant_lookup = ActiveWorkbook.Sheets("Account Names").Cells(1 + relevant_row, inventory_column).value
+        If record_column = 1 Then
+            ACCOUNTINGDETAIL = "Inventory Revenue: " & relevant_lookup
+            Exit Function
+        End If
+        
+        If record_column = 2 Then
+            ACCOUNTINGDETAIL = CStr(VHLOOKUP(relevant_lookup, ENTRYRANGE("Invoice Sent", begin_date, "Beg"), 2))
+            Exit Function
+        End If
+        
+        If record_column = 3 Then
+            ACCOUNTINGDETAIL = CStr(VHLOOKUP(relevant_lookup, ENTRYRANGE("Invoice Sent", end_date, "End"), 2))
+            Exit Function
+        End If
+        
+        If record_column = 4 Then
+            ACCOUNTINGDETAIL = CStr(VHLOOKUP(relevant_lookup, ENTRYRANGE("Invoice Sent", begin_date, "Now"), 2))
+            Exit Function
+        End If
+        
+        ACCOUNTINGDETAIL = ""
+        Exit Function
+    End If
+    
+    i = i + ACCOUNTCOUNT("Revenues")
+    If record_row <= i Then
+        relevant_row = record_row - i + ACCOUNTCOUNT("Revenues")
+        relevant_lookup = ActiveWorkbook.Sheets("Account Names").Cells(1 + relevant_row, revenue_column).value
+        If record_column = 1 Then
+            ACCOUNTINGDETAIL = "Other Revenue: " & relevant_lookup
+            Exit Function
+        End If
+        
+        If record_column = 2 Then
+            ACCOUNTINGDETAIL = CStr(VHLOOKUP(relevant_lookup, ENTRYRANGE("Invoice Sent", begin_date, "Beg"), 2))
+            Exit Function
+        End If
+        
+        If record_column = 3 Then
+            ACCOUNTINGDETAIL = CStr(VHLOOKUP(relevant_lookup, ENTRYRANGE("Invoice Sent", end_date, "End"), 2))
+            Exit Function
+        End If
+        
+        If record_column = 4 Then
+            ACCOUNTINGDETAIL = CStr(VHLOOKUP(relevant_lookup, ENTRYRANGE("Invoice Sent", begin_date, "Now"), 2))
+            Exit Function
+        End If
+        
+        FINANCEDATA = ""
+        Exit Function
+    End If
+    
+    i = i + ACCOUNTCOUNT("Investments")
+    If record_row <= i Then
+        relevant_row = record_row - i + ACCOUNTCOUNT("Investments")
+        relevant_lookup = ActiveWorkbook.Sheets("Account Names").Cells(1 + relevant_row, investment_column).value
+        If record_column = 1 Then
+            ACCOUNTINGDETAIL = "Interest Revenue: " & relevant_lookup
+            Exit Function
+        End If
+        
+        If record_column = 2 Then
+            ACCOUNTINGDETAIL = CStr(Round(TVM(relevant_lookup, ENTRYRANGE("Invoice Received", begin_date, "Beg"), begin_date) - VHLOOKUP(relevant_lookup, ENTRYRANGE("Invoice Received", begin_date, "Beg"), 2) - TVM(relevant_lookup, ENTRYRANGE("Invoice Sent", begin_date, "Beg"), begin_date) + VHLOOKUP(relevant_lookup, ENTRYRANGE("Invoice Sent", begin_date, "Beg"), 2)))
+            Exit Function
+        End If
+        
+        If record_column = 3 Then
+            ACCOUNTINGDETAIL = CStr(Round(TVM(relevant_lookup, ENTRYRANGE("Invoice Received", end_date, "End"), end_date) - VHLOOKUP(relevant_lookup, ENTRYRANGE("Invoice Received", end_date, "End"), 2) - TVM(relevant_lookup, ENTRYRANGE("Invoice Sent", end_date, "End"), end_date) + VHLOOKUP(relevant_lookup, ENTRYRANGE("Invoice Sent", end_date, "End"), 2)))
+            Exit Function
+        End If
+        
+        If record_column = 4 Then
+            ACCOUNTINGDETAIL = CStr(Round(TVM(relevant_lookup, ENTRYRANGE("Invoice Received", Now(), "Now"), Now()) - VHLOOKUP(relevant_lookup, ENTRYRANGE("Invoice Received", Now(), "Now"), 2) - TVM(relevant_lookup, ENTRYRANGE("Invoice Sent", Now(), "Now"), Now()) + VHLOOKUP(relevant_lookup, ENTRYRANGE("Invoice Sent", Now(), "Now"), 2)))
+            Exit Function
+        End If
+        
+        ACCOUNTINGDETAIL = ""
+        Exit Function
+    End If
+    
+    i = i + ACCOUNTCOUNT("Property")
+    If record_row <= i Then
+        relevant_row = record_row - i + ACCOUNTCOUNT("Property")
+        relevant_lookup = ActiveWorkbook.Sheets("Account Names").Cells(1 + relevant_row, property_column).value
+        If record_column = 1 Then
+            ACCOUNTINGDETAIL = "Gain: " & relevant_lookup
+            Exit Function
+        End If
+        
+        If record_column = 2 Then
+            ACCOUNTINGDETAIL = CStr(LTA(relevant_lookup, ENTRYRANGE("Invoice Received", begin_date, "Beg"), ENTRYRANGE("Invoice Sent", begin_date, "Beg"), begin_date, "gain"))
+            Exit Function
+        End If
+        
+        If record_column = 3 Then
+            ACCOUNTINGDETAIL = CStr(LTA(relevant_lookup, ENTRYRANGE("Invoice Received", end_date, "End"), ENTRYRANGE("Invoice Sent", end_date, "End"), end_date, "gain"))
+            Exit Function
+        End If
+        
+        If record_column = 4 Then
+            ACCOUNTINGDETAIL = CStr(LTA(relevant_lookup, ENTRYRANGE("Invoice Received", begin_date, "Now"), ENTRYRANGE("Invoice Sent", begin_date, "Now"), Now(), "gain"))
+            Exit Function
+        End If
+        
+        FINANCEDATA = ""
+        Exit Function
+    End If
+    
+    i = i + ACCOUNTCOUNT("Intangibles")
+    If record_row <= i Then
+        relevant_row = record_row - i + ACCOUNTCOUNT("Intangibles")
+        relevant_lookup = ActiveWorkbook.Sheets("Account Names").Cells(1 + relevant_row, intangible_column).value
+        If record_column = 1 Then
+            ACCOUNTINGDETAIL = "Gain: " & relevant_lookup
+            Exit Function
+        End If
+        
+        If record_column = 2 Then
+            ACCOUNTINGDETAIL = CStr(LTA(relevant_lookup, ENTRYRANGE("Invoice Received", begin_date, "Beg"), ENTRYRANGE("Invoice Sent", begin_date, "Beg"), begin_date, "gain"))
+            Exit Function
+        End If
+        
+        If record_column = 3 Then
+            ACCOUNTINGDETAIL = CStr(LTA(relevant_lookup, ENTRYRANGE("Invoice Received", end_date, "End"), ENTRYRANGE("Invoice Sent", end_date, "End"), end_date, "gain"))
+            Exit Function
+        End If
+        
+        If record_column = 4 Then
+            ACCOUNTINGDETAIL = CStr(LTA(relevant_lookup, ENTRYRANGE("Invoice Received", begin_date, "Now"), ENTRYRANGE("Invoice Sent", begin_date, "Now"), Now(), "gain"))
+            Exit Function
+        End If
+        
+        FINANCEDATA = ""
+        Exit Function
+    End If
+    
+    i = i + ACCOUNTCOUNT("Inventory")
+    If record_row <= i Then
+        relevant_row = record_row - i + ACCOUNTCOUNT("Inventory")
+        relevant_lookup = ActiveWorkbook.Sheets("Account Names").Cells(1 + relevant_row, inventory_column).value
+        If record_column = 1 Then
+            ACCOUNTINGDETAIL = "COGS: " & relevant_lookup
+            Exit Function
+        End If
+        
+        If record_column = 2 Then
+            ACCOUNTINGDETAIL = CStr(FIFO(relevant_lookup, ENTRYRANGE("Invoice Received", begin_date, "Beg"), INVENTORYUSED(relevant_lookup, ENTRYRANGE("Invoice Sent", begin_date, "Beg"))))
+            Exit Function
+        End If
+        
+        If record_column = 3 Then
+            ACCOUNTINGDETAIL = CStr(FIFO(relevant_lookup, ENTRYRANGE("Invoice Received", end_date, "End"), INVENTORYUSED(relevant_lookup, ENTRYRANGE("Invoice Sent", end_date, "End"))))
+            Exit Function
+        End If
+        
+        If record_column = 4 Then
+            ACCOUNTINGDETAIL = CStr(FIFO(relevant_lookup, ENTRYRANGE("Invoice Received", begin_date, "Now"), INVENTORYUSED(relevant_lookup, ENTRYRANGE("Invoice Sent", begin_date, "Now"))))
+            Exit Function
+        End If
+        
+        FINANCEDATA = ""
+        Exit Function
+    End If
+    
+    i = i + ACCOUNTCOUNT("Workers")
+    If record_row <= i Then
+        relevant_row = record_row - i + ACCOUNTCOUNT("Workers")
+        relevant_lookup = ActiveWorkbook.Sheets("Account Names").Cells(1 + relevant_row, worker_column).value
+        If record_column = 1 Then
+            ACCOUNTINGDETAIL = "Wage Expense: " & relevant_lookup
+            Exit Function
+        End If
+        
+        If record_column = 2 Then
+            ACCOUNTINGDETAIL = CStr(TLOOKUP(relevant_lookup, ENTRYRANGE("Invoice Sent", begin_date, "Beg")))
+            Exit Function
+        End If
+        
+        If record_column = 3 Then
+            ACCOUNTINGDETAIL = CStr(TLOOKUP(relevant_lookup, ENTRYRANGE("Invoice Sent", end_date, "End")))
+            Exit Function
+        End If
+        
+        If record_column = 4 Then
+            ACCOUNTINGDETAIL = CStr(TLOOKUP(relevant_lookup, ENTRYRANGE("Invoice Sent", begin_date, "Now")))
+            Exit Function
+        End If
+        
+        FINANCEDATA = ""
+        Exit Function
+    End If
+    
+    i = i + ACCOUNTCOUNT("Property")
+    If record_row <= i Then
+        relevant_row = record_row - i + ACCOUNTCOUNT("Property")
+        relevant_lookup = ActiveWorkbook.Sheets("Account Names").Cells(1 + relevant_row, property_column).value
+        If record_column = 1 Then
+            ACCOUNTINGDETAIL = "Depreciation: " & relevant_lookup
+            Exit Function
+        End If
+        
+        If record_column = 2 Then
+            ACCOUNTINGDETAIL = CStr(LTA(relevant_lookup, ENTRYRANGE("Invoice Received", begin_date, "Beg"), ENTRYRANGE("Invoice Sent", begin_date, "Beg"), begin_date, "expense"))
+            Exit Function
+        End If
+        
+        If record_column = 3 Then
+            ACCOUNTINGDETAIL = CStr(LTA(relevant_lookup, ENTRYRANGE("Invoice Received", end_date, "End"), ENTRYRANGE("Invoice Sent", end_date, "End"), end_date, "expense"))
+            Exit Function
+        End If
+        
+        If record_column = 4 Then
+            ACCOUNTINGDETAIL = CStr(LTA(relevant_lookup, ENTRYRANGE("Invoice Received", begin_date, "Now"), ENTRYRANGE("Invoice Sent", begin_date, "Now"), Now(), "expense"))
+            Exit Function
+        End If
+        
+        FINANCEDATA = ""
+        Exit Function
+    End If
+    
+    i = i + ACCOUNTCOUNT("Intangibles")
+    If record_row <= i Then
+        relevant_row = record_row - i + ACCOUNTCOUNT("Intangibles")
+        relevant_lookup = ActiveWorkbook.Sheets("Account Names").Cells(1 + relevant_row, intangible_column).value
+        If record_column = 1 Then
+            ACCOUNTINGDETAIL = "Amortization: " & relevant_lookup
+            Exit Function
+        End If
+        
+        If record_column = 2 Then
+            ACCOUNTINGDETAIL = CStr(LTA(relevant_lookup, ENTRYRANGE("Invoice Received", begin_date, "Beg"), ENTRYRANGE("Invoice Sent", begin_date, "Beg"), begin_date, "expense"))
+            Exit Function
+        End If
+        
+        If record_column = 3 Then
+            ACCOUNTINGDETAIL = CStr(LTA(relevant_lookup, ENTRYRANGE("Invoice Received", end_date, "End"), ENTRYRANGE("Invoice Sent", end_date, "End"), end_date, "expense"))
+            Exit Function
+        End If
+        
+        If record_column = 4 Then
+            ACCOUNTINGDETAIL = CStr(LTA(relevant_lookup, ENTRYRANGE("Invoice Received", begin_date, "Now"), ENTRYRANGE("Invoice Sent", begin_date, "Now"), Now(), "expense"))
+            Exit Function
+        End If
+        
+        FINANCEDATA = ""
+        Exit Function
+    End If
+    
+    i = i + ACCOUNTCOUNT("Debt")
+    If record_row <= i Then
+        relevant_row = record_row - i + ACCOUNTCOUNT("Debt")
+        relevant_lookup = ActiveWorkbook.Sheets("Account Names").Cells(1 + relevant_row, investment_column).value
+        If record_column = 1 Then
+            ACCOUNTINGDETAIL = "Interest Expense: " & relevant_lookup
+            Exit Function
+        End If
+        
+        If record_column = 2 Then
+            ACCOUNTINGDETAIL = CStr(Round(TVM(relevant_lookup, ENTRYRANGE("Invoice Sent", begin_date, "Beg"), begin_date) - VHLOOKUP(relevant_lookup, ENTRYRANGE("Invoice Sent", begin_date, "Beg"), 2) - TVM(relevant_lookup, ENTRYRANGE("Invoice Received", begin_date, "Beg"), begin_date) + VHLOOKUP(relevant_lookup, ENTRYRANGE("Invoice Received", begin_date, "Beg"), 2)))
+            Exit Function
+        End If
+        
+        If record_column = 3 Then
+            ACCOUNTINGDETAIL = CStr(Round(TVM(relevant_lookup, ENTRYRANGE("Invoice Sent", end_date, "End"), end_date) - VHLOOKUP(relevant_lookup, ENTRYRANGE("Invoice Sent", end_date, "End"), 2) - TVM(relevant_lookup, ENTRYRANGE("Invoice Received", end_date, "End"), end_date) + VHLOOKUP(relevant_lookup, ENTRYRANGE("Invoice Received", end_date, "End"), 2)))
+            Exit Function
+        End If
+        
+        If record_column = 4 Then
+            ACCOUNTINGDETAIL = CStr(Round(TVM(relevant_lookup, ENTRYRANGE("Invoice Sent", Now(), "Now"), Now()) - VHLOOKUP(relevant_lookup, ENTRYRANGE("Invoice Sent", Now(), "Now"), 2) - TVM(relevant_lookup, ENTRYRANGE("Invoice Received", Now(), "Now"), Now()) + VHLOOKUP(relevant_lookup, ENTRYRANGE("Invoice Received", Now(), "Now"), 2)))
+            Exit Function
+        End If
+        
+        ACCOUNTINGDETAIL = ""
+        Exit Function
+    End If
+    
+    i = i + 1
+    If record_row <= i Then
+        relevant_row = record_row - i + 1
+        relevant_lookup = "Cash"
+        If record_column = 1 Then
+            ACCOUNTINGDETAIL = "Cash"
+            Exit Function
+        End If
+        
+        If record_column = 2 Then
+            ACCOUNTINGDETAIL = CStr(SUMLOOKUP(ENTRYRANGE("Check Received", begin_date, "Beg")) - SUMLOOKUP(ENTRYRANGE("Check Sent", begin_date, "Beg")))
+            Exit Function
+        End If
+        
+        If record_column = 3 Then
+            ACCOUNTINGDETAIL = CStr(SUMLOOKUP(ENTRYRANGE("Check Received", end_date, "End")) - SUMLOOKUP(ENTRYRANGE("Check Sent", end_date, "End")))
+            Exit Function
+        End If
+        
+        If record_column = 4 Then
+            ACCOUNTINGDETAIL = CStr(SUMLOOKUP(ENTRYRANGE("Check Received", begin_date, "Now")) - SUMLOOKUP(ENTRYRANGE("Check Sent", begin_date, "Beg")))
+            Exit Function
+        End If
+        
+        ACCOUNTINGDETAIL = ""
+        Exit Function
+    End If
+    
+    i = i + ACCOUNTCOUNT("Customers")
+    If record_row <= i Then
+        relevant_row = record_row - i + ACCOUNTCOUNT("Customers")
+        relevant_lookup = ActiveWorkbook.Sheets("Account Names").Cells(1 + relevant_row, customer_column).value
+        If record_column = 1 Then
+            ACCOUNTINGDETAIL = "Receivable: " & relevant_lookup
+            Exit Function
+        End If
+        
+        If record_column = 2 Then
+            ACCOUNTINGDETAIL = CStr(TLOOKUP(relevant_lookup, ENTRYRANGE("Invoice Sent", begin_date, "Beg")) - TLOOKUP(relevant_lookup, ENTRYRANGE("Check Received", begin_date, "Beg")))
+            Exit Function
+        End If
+        
+        If record_column = 3 Then
+            ACCOUNTINGDETAIL = CStr(TLOOKUP(relevant_lookup, ENTRYRANGE("Invoice Sent", end_date, "End")) - TLOOKUP(relevant_lookup, ENTRYRANGE("Check Received", end_date, "End")))
+            Exit Function
+        End If
+        
+        If record_column = 4 Then
+            ACCOUNTINGDETAIL = CStr(TLOOKUP(relevant_lookup, ENTRYRANGE("Invoice Sent", begin_date, "Now")) - TLOOKUP(relevant_lookup, ENTRYRANGE("Check Received", begin_date, "Now")))
+            Exit Function
+        End If
+        
+        ACCOUNTINGDETAIL = ""
+        Exit Function
+    End If
+    
+    i = i + ACCOUNTCOUNT("Inventory")
+    If record_row <= i Then
+        relevant_row = record_row - i + ACCOUNTCOUNT("Inventory")
+        relevant_lookup = ActiveWorkbook.Sheets("Account Names").Cells(1 + relevant_row, inventory_column).value
+        If record_column = 1 Then
+            ACCOUNTINGDETAIL = "Inventory/WIP: " & relevant_lookup
+            Exit Function
+        End If
+        
+        If record_column = 2 Then
+            ACCOUNTINGDETAIL = CStr(VHLOOKUP(relevant_lookup, ENTRYRANGE("Invoice Received", begin_date, "Beg"), 2) - FIFO(relevant_lookup, ENTRYRANGE("Invoice Received", begin_date, "Beg"), INVENTORYUSED(relevant_lookup, ENTRYRANGE("Invoice Sent", begin_date, "Beg"))))
+            Exit Function
+        End If
+        
+        If record_column = 3 Then
+            ACCOUNTINGDETAIL = CStr(VHLOOKUP(relevant_lookup, ENTRYRANGE("Invoice Received", end_date, "End"), 2) - FIFO(relevant_lookup, ENTRYRANGE("Invoice Received", end_date, "End"), INVENTORYUSED(relevant_lookup, ENTRYRANGE("Invoice Sent", end_date, "End"))))
+            Exit Function
+        End If
+        
+        If record_column = 4 Then
+            ACCOUNTINGDETAIL = CStr(VHLOOKUP(relevant_lookup, ENTRYRANGE("Invoice Received", begin_date, "Now"), 2) - FIFO(relevant_lookup, ENTRYRANGE("Invoice Received", begin_date, "Now"), INVENTORYUSED(relevant_lookup, ENTRYRANGE("Invoice Sent", begin_date, "Now"))))
+            Exit Function
+        End If
+        
+        FINANCEDATA = ""
+        Exit Function
+    End If
+    
+    i = i + ACCOUNTCOUNT("Property")
+    If record_row <= i Then
+        relevant_row = record_row - i + ACCOUNTCOUNT("Property")
+        relevant_lookup = ActiveWorkbook.Sheets("Account Names").Cells(1 + relevant_row, property_column).value
+        If record_column = 1 Then
+            ACCOUNTINGDETAIL = "Net PPE: " & relevant_lookup
+            Exit Function
+        End If
+        
+        If record_column = 2 Then
+            ACCOUNTINGDETAIL = CStr(LTA(relevant_lookup, ENTRYRANGE("Invoice Received", begin_date, "Beg"), ENTRYRANGE("Invoice Sent", begin_date, "Beg"), begin_date, "net"))
+            Exit Function
+        End If
+        
+        If record_column = 3 Then
+            ACCOUNTINGDETAIL = CStr(LTA(relevant_lookup, ENTRYRANGE("Invoice Received", end_date, "End"), ENTRYRANGE("Invoice Sent", end_date, "End"), end_date, "net"))
+            Exit Function
+        End If
+        
+        If record_column = 4 Then
+            ACCOUNTINGDETAIL = CStr(LTA(relevant_lookup, ENTRYRANGE("Invoice Received", begin_date, "Now"), ENTRYRANGE("Invoice Sent", begin_date, "Now"), Now(), "net"))
+            Exit Function
+        End If
+        
+        FINANCEDATA = ""
+        Exit Function
+    End If
+    
+    i = i + ACCOUNTCOUNT("Intangibles")
+    If record_row <= i Then
+        relevant_row = record_row - i + ACCOUNTCOUNT("Intangibles")
+        relevant_lookup = ActiveWorkbook.Sheets("Account Names").Cells(1 + relevant_row, intangible_column).value
+        If record_column = 1 Then
+            ACCOUNTINGDETAIL = "Net Intangible: " & relevant_lookup
+            Exit Function
+        End If
+        
+        If record_column = 2 Then
+            ACCOUNTINGDETAIL = CStr(LTA(relevant_lookup, ENTRYRANGE("Invoice Received", begin_date, "Beg"), ENTRYRANGE("Invoice Sent", begin_date, "Beg"), begin_date, "net"))
+            Exit Function
+        End If
+        
+        If record_column = 3 Then
+            ACCOUNTINGDETAIL = CStr(LTA(relevant_lookup, ENTRYRANGE("Invoice Received", end_date, "End"), ENTRYRANGE("Invoice Sent", end_date, "End"), end_date, "net"))
+            Exit Function
+        End If
+        
+        If record_column = 4 Then
+            ACCOUNTINGDETAIL = CStr(LTA(relevant_lookup, ENTRYRANGE("Invoice Received", begin_date, "Now"), ENTRYRANGE("Invoice Sent", begin_date, "Now"), Now(), "net"))
+            Exit Function
+        End If
+        
+        FINANCEDATA = ""
+        Exit Function
+    End If
+    
+    i = i + ACCOUNTCOUNT("Investments")
+    If record_row <= i Then
+        relevant_row = record_row - i + ACCOUNTCOUNT("Investments")
+        relevant_lookup = ActiveWorkbook.Sheets("Account Names").Cells(1 + relevant_row, investment_column).value
+        If record_column = 1 Then
+            ACCOUNTINGDETAIL = "Investment: " & relevant_lookup
+            Exit Function
+        End If
+        
+        If record_column = 2 Then
+            ACCOUNTINGDETAIL = CStr(Round(TVM(relevant_lookup, ENTRYRANGE("Invoice Received", begin_date, "Beg"), begin_date) - TVM(relevant_lookup, ENTRYRANGE("Invoice Sent", begin_date, "Beg"), begin_date)))
+            Exit Function
+        End If
+        
+        If record_column = 3 Then
+            ACCOUNTINGDETAIL = CStr(Round(TVM(relevant_lookup, ENTRYRANGE("Invoice Received", end_date, "End"), end_date) - TVM(relevant_lookup, ENTRYRANGE("Invoice Sent", end_date, "End"), end_date)))
+            Exit Function
+        End If
+        
+        If record_column = 4 Then
+            ACCOUNTINGDETAIL = CStr(Round(TVM(relevant_lookup, ENTRYRANGE("Invoice Received", begin_date, "Now"), Now()) - TVM(relevant_lookup, ENTRYRANGE("Invoice Sent", begin_date, "Now"), Now())))
+            Exit Function
+        End If
+        
+        ACCOUNTINGDETAIL = ""
+        Exit Function
+    End If
+    
+    i = i + ACCOUNTCOUNT("Vendors")
+    If record_row <= i Then
+        relevant_row = record_row - i + ACCOUNTCOUNT("Vendors")
+        relevant_lookup = ActiveWorkbook.Sheets("Account Names").Cells(1 + relevant_row, vendor_column).value
+        If record_column = 1 Then
+            ACCOUNTINGDETAIL = "Accounts Payable: " & relevant_lookup
+            Exit Function
+        End If
+        
+        If record_column = 2 Then
+            ACCOUNTINGDETAIL = CStr(TLOOKUP(relevant_lookup, ENTRYRANGE("Invoice Received", begin_date, "Beg")))
+            Exit Function
+        End If
+        
+        If record_column = 3 Then
+            ACCOUNTINGDETAIL = CStr(TLOOKUP(relevant_lookup, ENTRYRANGE("Invoice Received", end_date, "End")))
+            Exit Function
+        End If
+        
+        If record_column = 4 Then
+            ACCOUNTINGDETAIL = CStr(TLOOKUP(relevant_lookup, ENTRYRANGE("Invoice Received", begin_date, "Now")))
+            Exit Function
+        End If
+        
+        ACCOUNTINGDETAIL = ""
+        Exit Function
+    End If
+    
+    i = i + ACCOUNTCOUNT("Workers")
+    If record_row <= i Then
+        relevant_row = record_row - i + ACCOUNTCOUNT("Workers")
+        relevant_lookup = ActiveWorkbook.Sheets("Account Names").Cells(1 + relevant_row, worker_column).value
+        If record_column = 1 Then
+            ACCOUNTINGDETAIL = "Wages Payable: " & relevant_lookup
+            Exit Function
+        End If
+        
+        If record_column = 2 Then
+            ACCOUNTINGDETAIL = CStr(TLOOKUP(relevant_lookup, ENTRYRANGE("Invoice Received", begin_date, "Beg")) - TLOOKUP(relevant_lookup, ENTRYRANGE("Check Sent", begin_date, "Beg")))
+            Exit Function
+        End If
+        
+        If record_column = 3 Then
+            ACCOUNTINGDETAIL = CStr(TLOOKUP(relevant_lookup, ENTRYRANGE("Invoice Received", end_date, "End")) - TLOOKUP(relevant_lookup, ENTRYRANGE("Check Sent", end_date, "End")))
+            Exit Function
+        End If
+        
+        If record_column = 4 Then
+            ACCOUNTINGDETAIL = CStr(TLOOKUP(relevant_lookup, ENTRYRANGE("Invoice Received", begin_date, "Now")) - TLOOKUP(relevant_lookup, ENTRYRANGE("Check Sent", begin_date, "Now")))
+            Exit Function
+        End If
+        
+        ACCOUNTINGDETAIL = ""
+        Exit Function
+    End If
+    
+    i = i + ACCOUNTCOUNT("Debt")
+    If record_row <= i Then
+        relevant_row = record_row - i + ACCOUNTCOUNT("Debt")
+        relevant_lookup = ActiveWorkbook.Sheets("Account Names").Cells(1 + relevant_row, debt_column).value
+        If record_column = 1 Then
+            ACCOUNTINGDETAIL = "Investment: " & relevant_lookup
+            Exit Function
+        End If
+        
+        If record_column = 2 Then
+            ACCOUNTINGDETAIL = CStr(Round(TVM(relevant_lookup, ENTRYRANGE("Invoice Sent", begin_date, "Beg"), begin_date) - TVM(relevant_lookup, ENTRYRANGE("Invoice Received", begin_date, "Beg"), begin_date)))
+            Exit Function
+        End If
+        
+        If record_column = 3 Then
+            ACCOUNTINGDETAIL = CStr(Round(TVM(relevant_lookup, ENTRYRANGE("Invoice Sent", end_date, "End"), end_date) - TVM(relevant_lookup, ENTRYRANGE("Invoice Received", end_date, "End"), end_date)))
+            Exit Function
+        End If
+        
+        If record_column = 4 Then
+            ACCOUNTINGDETAIL = CStr(Round(TVM(relevant_lookup, ENTRYRANGE("Invoice Sent", begin_date, "Now"), Now()) - TVM(relevant_lookup, ENTRYRANGE("Invoice Received", begin_date, "Now"), Now())))
+            Exit Function
+        End If
+        
+        ACCOUNTINGDETAIL = ""
+        Exit Function
+    End If
+    
+    i = i + 1
+    If record_row <= i Then
+        ACCOUNTINGDETAIL = ""
+        Exit Function
+    End If
+    
+    i = i + 1
+    If record_row <= i Then
+    
+        If record_column = 1 Then
+            ACCOUNTINGDETAIL = "Operating Inflows"
+            Exit Function
+        End If
+        
+        Dim amount_paid As Double
+        amount_paid = SUMLOOKUP(ENTRYRANGE("Check Received", begin_date, "Beg"))
+        
+        If record_column = 2 Then
+            ACCOUNTINGDETAIL = CStr(CASHFLOWBASIS("Products", ENTRYRANGE("Invoice Sent", begin_date, "Beg"), amount_paid))
+            Exit Function
+        End If
+        
+        ACCOUNTINGDETAIL = ""
+        Exit Function
+    End If
+    
+    ACCOUNTINGDETAIL = ""
+End Function
